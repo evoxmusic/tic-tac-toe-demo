@@ -57,21 +57,16 @@ async function autoMigrate() {
 }
 
 // ===== START SERVER =====
-async function start() {
-  try {
-    await autoMigrate();
-  } catch (err) {
-    console.warn('Could not run migration, continuing without database:', err.message);
-  }
-
-  server.listen(PORT, () => {
-    console.log(`
+// Listen immediately so healthchecks pass, then migrate in background
+server.listen(PORT, () => {
+  console.log(`
   ╔═══════════════════════════════════════╗
   ║       Tic Tac Toe Server              ║
   ║       http://localhost:${PORT}           ║
   ╚═══════════════════════════════════════╝
-    `);
+  `);
+  // Run migration after server is already accepting connections
+  autoMigrate().catch((err) => {
+    console.warn('Could not run migration, database features may be limited:', err.message);
   });
-}
-
-start();
+});
